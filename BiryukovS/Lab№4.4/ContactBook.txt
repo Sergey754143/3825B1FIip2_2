@@ -1,0 +1,14 @@
+Surname: 
+Name: 
+Patronymic: 
+Phone number: 80000000000
+Birthday: 00.00.0000
+Favourite: no
+
+Surname: Ivanov
+Name: Ivan
+Patronymic: Ivanovich
+Phone number: 89576379587
+Birthday: 23.02.2007
+Favourite: yes
+
