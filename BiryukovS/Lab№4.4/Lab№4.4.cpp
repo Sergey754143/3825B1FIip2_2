@@ -102,7 +102,7 @@ private:
 	string birthday;
 	bool favourite;
 public:
-	Contact() : phone(80000000000), favourite(false), birthday("00.00.0000") {}
+	Contact() : phone(0), favourite(false), birthday("00.00.0000") {}
 	Contact(string surname_, string name_, string patr_, long long int phone_, string birthday_, bool favourite_) :
 		surname(surname_), name(name_), patr(patr_), phone(phone_), birthday(birthday_), favourite(favourite_) {
 	}
@@ -115,16 +115,16 @@ public:
 		}
 		return patr < other.patr;
 	}
-	string getsur() {
+	string getsur() const {
 		return surname;
 	}
-	string getname() {
+	string getname() const {
 		return name;
 	}
-	string getpatr() {
+	string getpatr() const {
 		return patr;
 	}
-	long long int getphone() {
+	long long int getphone() const {
 		return phone;
 	}
 	bool getfav() {
@@ -140,23 +140,32 @@ public:
 				cout << "ERROR: incorrect number. Try again: ";
 			}
 			else {
-				switch (choice) {
-				case 1:
-					cout << "Enter new surname, name and patronymic: ";
-					cin >> surname >> name >> patr;
-					break;
-				case 2:
-					cout << "Enter new phone number: ";
-					phone = number();
-					break;
-				case 3:
-					birthday = birth();
-					break;
-				}
-				return;
+				break;
 			}
 		}
+		switch (choice) {
+		case 1:
+			cout << "Enter new surname, name and patronymic: ";
+			cin >> surname >> name >> patr;
+			break;
+		case 2: {
+			cout << "Enter new phone number: ";
+			long long int temp = number();
+			if (temp == phone) {
+				cout << "Such phone number already exists\n";
+			}
+			else {
+				phone = temp;
+			}
+			break;
+		}
+		case 3:
+			birthday = birth();
+			break;
+		}
+		
 	}
+		
 	void setfavour() {
 		favourite = true;
 	}
@@ -231,6 +240,14 @@ public:
 			contacts[i] = other.contacts[i];
 		}
 	}
+	bool phonecheck(long long int phone) {
+		for (int i = 0; i < size; ++i) {
+			if (contacts[i].getphone() == phone) {
+				return true;
+			}
+		}
+		return false;
+	}
 	Contact create() { // не стал предалагать пользователю добавить контакт в избранное при создании, обычно это отдельный функционал, как и здесь
 		string s;
 		string n;
@@ -239,34 +256,46 @@ public:
 		string b;
 		cout << "Enter the surname, name and patronymic: ";
 		cin >> s >> n >> p;
-		cout << "Enter the phone number: ";
-		ph = number();
+		while (true) {
+			cout << "Enter the phone number: ";
+			ph = number();
+			if (phonecheck(ph) == false) {
+				break;
+			}
+			else {
+				cout << "Such number exists. Enter another: ";
+			}
+		}
 		b = birth();
 		Contact newc(s, n, p, ph, b, false);
 		return newc;
 	}
-
-	void newcon() {
-		++size;
-		Contact* newc = new Contact[size];
-		for (int i = 0; i < size - 1; ++i) {
-			newc[i] = contacts[i];
-		}
-		newc[size - 1] = create();
-		delete[] contacts;
-		contacts = newc;
-		sortcon();
-	}
 	void addcon(const Contact& c) {
-		++size;
-		Contact* newc = new Contact[size];
-		for (int i = 0; i < size - 1; ++i) {
+		if (phonecheck(c.getphone()) == true) {
+			cout << "ERROR: Contact with this phone number already exists\n";
+			return;
+		}
+		int a = 0;
+		while (a < size && contacts[a] < c) {
+			++a;
+		}
+		Contact* newc = new Contact[size + 1];
+		for (int i = 0; i < a; ++i) {
 			newc[i] = contacts[i];
 		}
-		newc[size - 1] = c;
+		newc[a] = c;
+		for (int i = a; i < size; ++i) {
+			newc[i + 1] = contacts[i];
+		}
 		delete[] contacts;
 		contacts = newc;
+		++size;
 	}
+	void newcon() {
+		Contact c = create();
+		addcon(c);
+	}
+	
 	Contact findsur(string sur, string nam, string patr) {
 		for (int i = 0; i < size; ++i) {
 			if (contacts[i].getsur() == sur) {
@@ -296,7 +325,11 @@ public:
 		for (int i = 0; i < size; ++i) {
 			if (contacts[i].getphone() == phone) {
 				contacts[i].change();
+				Contact temp = contacts[i];
+				delcontact(phone);
+				addcon(temp); // заново добавил контакт чтобы было отсортировано
 				check = true;
+				return;
 			}
 		}
 		if (check == false) {
@@ -307,14 +340,17 @@ public:
 		bool check = false;
 		for (int i = 0; i < size; ++i) {
 			if (contacts[i].getsur() == surname && contacts[i].getname() == name && contacts[i].getpatr() == patr) {
-				contacts[i].change();
+				Contact temp = contacts[i];
+				temp.change();
+				delcontact(contacts[i].getphone());
+				addcon(temp);
 				check = true;
+				break;
 			}
 		}
 		if (check == false) {
 			cout << "Such contact has not been found\n";
 		}
-		sortcon();
 	}
 	int numbercon() {
 		return size;
@@ -396,23 +432,26 @@ public:
 		}
 	}
 	void delcontact(long long int phone) {
-		int a = 0;
+		int a = -1;
 		for (int i = 0; i < size; ++i) {
 			if (contacts[i].getphone() == phone) {
 				a = i;
 			}
+		}
+		if (a == -1) {
+			cout << "Such contact has not been found\n";
+			return;
 		}
 		--size;
 		Contact* newc = new Contact[size];
 		for (int i = 0; i < a; ++i) {
 			newc[i] = contacts[i];
 		}
-		for (int i = a + 1; i < size; ++i) {
+		for (int i = a + 1; i <= size; ++i) {
 			newc[i - 1] = contacts[i];
 		}
 		delete[] contacts;
 		contacts = newc;
-		sortcon();
 	}
 	void writefile() {
 		std::ofstream file("ContactBook.txt");
@@ -437,7 +476,6 @@ public:
 		while (file >> c) {
 			addcon(c);
 		}
-		sortcon();
 	}
 	void print() {
 		bool check = false;
@@ -452,21 +490,36 @@ public:
 };
 
 int main() {
-	Contact A ("Ivanov", "Ivan", "Ivanovich", 89576379587, "01.01.2000", false);
-	Contact B ("Sidorov", "Nicolay", "Vladimirovich", 89987379587, "02.01.2002", true);
+	Contact A("Ivanov", "Ivan", "Ivanovich", 89576379587, "01.01.2000", false);
+	Contact B("Sidorov", "Nicolay", "Vladimirovich", 89987379587, "02.01.2002", true);
+	Contact C("Petrov", "Petr", "Sergeevich", 81111111111, "01.01.2010", false);
 	Book book;
+	book.print();
 	book.addcon(A);
 	book.addcon(B);
+	book.addcon(C);
 	book.newcon();
 	Contact finds1 = book.findsur("Ivanov", "Ivan", "Ivanovich");
 	Contact finds2 = book.findsur("Ivanov", "Ivan", "Sergeevich");
 	Contact findph1 = book.findphone(89987379587);
 	Contact findph2 = book.findphone(84484846657);
 	book.changecon("Ivanov", "Ivan", "Ivanovich");
+	book.changecon(89987379587);
+	cout << '\n';
 	book.setfav(89576379587);
+	book.setfav(81111111111);
 	book.printfavour();
+	cout << '\n';
 	book.delfav(89987379587);
+	book.delfav(81111111111);
 	book.delcontact(89987379587);
 	book.print();
+	cout << '\n';
+	book.charprint('I');
 	book.writefile();
+	book.delcontact(89576379587);
+	book.delcontact(81111111111);
+	book.readfile();
+	cout << '\n';
+	book.print();
 }

@@ -1,14 +1,21 @@
-Surname: 
-Name: 
-Patronymic: 
-Phone number: 80000000000
-Birthday: 00.00.0000
-Favourite: no
-
 Surname: Ivanov
 Name: Ivan
 Patronymic: Ivanovich
 Phone number: 89576379587
-Birthday: 23.02.2007
+Birthday: 20.10.6813
 Favourite: yes
+
+Surname: Petrov
+Name: Petr
+Patronymic: Sergeevich
+Phone number: 81111111111
+Birthday: 01.01.2010
+Favourite: no
+
+Surname: ¢
+Name: ¢
+Patronymic: ¢
+Phone number: 1651516
+Birthday: 10.10.10
+Favourite: no
 
